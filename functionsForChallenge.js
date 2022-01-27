@@ -1,72 +1,63 @@
-let beers
-
-async function fetchBeers() {
-  const response = await fetch('/beers.json')
-  const data = await response.json()
-  beers = data
-  startApp()
-}
-
-fetchBeers()
-
-const startApp = () => {
-  console.log(beers)
-
+const startChallengeFunctions = () => {
   const groupByBrand = () => {
-    return beers.reduce((group, beer) => {
-      const isExist = group.find(
-        beersByBrand => beersByBrand.brand === beer.brand
-      )
-      if (!isExist) {
-        return [
-          ...group,
-          {
-            brand: beer.brand,
-            beers: [beer.id]
-          }
-        ]
-      } else {
-        return group.map(beersByBrand =>
-          beersByBrand.brand === beer.brand
-            ? { ...beersByBrand, beers: [...beersByBrand.beers, beer.id] }
-            : beersByBrand
+    return JSON.stringify(
+      beers.reduce((group, beer) => {
+        const isExist = group.find(
+          beersByBrand => beersByBrand.brand === beer.brand
         )
-      }
-    }, [])
+        return isExist
+          ? group.map(beersByBrand =>
+              beersByBrand.brand === beer.brand
+                ? { ...beersByBrand, beers: [...beersByBrand.beers, beer.id] }
+                : beersByBrand
+            )
+          : [
+              ...group,
+              {
+                brand: beer.brand,
+                beers: [beer.id]
+              }
+            ]
+      }, [])
+    )
   }
-  console.log(groupByBrand())
 
   const filterByType = (type = 'Corn') => {
-    return beers.filter(beer => beer.type === type).map(beer => beer.id)
+    return JSON.stringify(
+      beers.filter(beer => beer.type === type).map(beer => beer.id)
+    )
   }
 
   const getCheapestBrand = () => {
-    const averageByBrand = beers.reduce((group, beer) => {
-      return {
+    const pricesByBrand = beers.reduce(
+      (group, beer) => ({
         ...group,
         [beer.brand]: [...(group[beer.brand] || []), Number(beer.price)]
-      }
-    }, {})
-
+      }),
+      {}
+    )
     let cheapestPrice = 9999
-    let cheapestBrand = ""
-    for (let [brand, prices] of Object.entries(averageByBrand)) {
-        const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length 
-        if (averagePrice < cheapestPrice) {
-            cheapestPrice = averagePrice
-            cheapestBrand = brand
-        }
-    }
-    return cheapestBrand
+    let cheapestBrand = ''
+    Object.entries(pricesByBrand).forEach(([brand, prices]) => {
+      const averagePrice =
+        prices.reduce((sum, price) => sum + price, 0) / prices.length
+      if (averagePrice < cheapestPrice) {
+        cheapestPrice = averagePrice
+        cheapestBrand = brand
+      }
+    })
+    return JSON.stringify(cheapestBrand)
   }
 
   const getWithoutAllergies = (ingredient = 'corn') => {
-    return beers
-      .filter(
-        beer =>
-          beer.ingredients.find(ing => ing.name === ingredient).ratio === '0'
-      )
-      .map(beer => beer.id)
+    return JSON.stringify(
+      beers
+        .filter(
+          beer =>
+            beer.ingredients.find(ing => ing.name === ingredient).ratio === '0'
+        )
+        .map(beer => beer.id)
+    )
   }
 
   const sortByWaterRatio = () => {
@@ -77,28 +68,35 @@ const startApp = () => {
       )
       return 1 - ingredientsRatio
     }
-    return beers
-      .sort((a, b) => {
-        const waterRatioA = getWaterRatio(a.ingredients)
-        const waterRatioB = getWaterRatio(b.ingredients)
-        if (waterRatioA === waterRatioB) {
-          return a.id.localeCompare(b.id)
-        } else {
-          return waterRatioB - waterRatioA
-        }
-      })
-      .map(beer => ({ id: beer.id, ratio: getWaterRatio(beer.ingredients) }))
+    return JSON.stringify(
+      beers
+        .sort((a, b) => {
+          const waterRatioA = getWaterRatio(a.ingredients)
+          const waterRatioB = getWaterRatio(b.ingredients)
+          return waterRatioA === waterRatioB
+            ? a.id.localeCompare(b.id)
+            : waterRatioB - waterRatioA
+        })
+        .map(beer => beer.id)
+    )
   }
 
   const groupByRoundedPrice = () => {
-    return beers.reduce((group, beer) => {
-      const roundedPrice = Math.ceil(beer.price / 100) * 100
-      return {
-        ...group,
-        [roundedPrice]: [...(group[roundedPrice] || []), beer.id]
-      }
-    }, {})
+    return JSON.stringify(
+      beers.reduce((group, beer) => {
+        const roundedPrice = Math.ceil(beer.price / 100) * 100
+        return {
+          ...group,
+          [roundedPrice]: [...(group[roundedPrice] || []), beer.id]
+        }
+      }, {})
+    )
   }
 
+  console.log(groupByBrand())
+  console.log(filterByType())
   console.log(getCheapestBrand())
+  console.log(getWithoutAllergies('wheat'))
+  console.log(sortByWaterRatio())
+  console.log(groupByRoundedPrice())
 }
