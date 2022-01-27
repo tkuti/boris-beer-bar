@@ -6,7 +6,7 @@ let _listContainer
 let beers
 
 async function fetchBeers() {
-  const response = await fetch('/beers.json')
+  const response = await fetch('./beers.json')
   beers = await response.json()
   startChallengeFunctions()
   routing()
